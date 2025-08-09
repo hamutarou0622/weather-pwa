@@ -1,6 +1,27 @@
  <!DOCTYPE html>
 <html lang="ja">
 <head>
+ <script>
+/* --- SWとキャッシュを一発リセット（?reset-sw=1 で実行） --- */
+(async () => {
+  if (location.search.includes('reset-sw=1')) {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } catch (e) {}
+    // クエリを外して再読込
+    const url = location.origin + location.pathname;
+    location.replace(url);
+  }
+})();
+</script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>暇つぶしサイト（全部入り・ゲート付き）</title>
@@ -463,3 +484,4 @@
   </script>
 </body>
 </html>
+
