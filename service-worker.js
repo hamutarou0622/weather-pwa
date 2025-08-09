@@ -1,41 +1,47 @@
-// オフライン起動＆軽量キャッシュ対応
-const VERSION = 'v1.0.0';
-const STATIC_CACHE = `static-${VERSION}`;
-const APP_SHELL = [ './', './index.html', './manifest.json' ];
+// service-worker.js
+const CACHE_VERSION = 'v5-2025-08-09';   // ★日付などで毎回変更
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
-self.addEventListener('install', (e)=>{
-  e.waitUntil(caches.open(STATIC_CACHE).then(c=>c.addAll(APP_SHELL)));
-  self.skipWaiting();
-});
+const ASSETS = [
+  '/weather-pwa/',           // ★サブパスに合わせる
+  '/weather-pwa/index.html',
+  '/weather-pwa/manifest.json',
+  '/weather-pwa/icons/icon-192.png',
+  '/weather-pwa/icons/icon-512.png',
+  // 必要に応じてCSS/JS/画像を追記
+];
 
-self.addEventListener('activate', (e)=>{
-  e.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==STATIC_CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => cache.addAll(ASSETS))
   );
+  self.skipWaiting(); // すぐ新SWに切替
 });
 
-self.addEventListener('fetch', (e)=>{
-  const url = new URL(e.request.url);
-  if(url.origin === location.origin){
-    // 自サイトはキャッシュ優先
-    e.respondWith(
-      caches.match(e.request).then(res=> res || fetch(e.request).then(r=>{
-        const copy = r.clone(); caches.open(STATIC_CACHE).then(c=>c.put(e.request, copy)); return r; }))
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => (k !== STATIC_CACHE) ? caches.delete(k) : null))
+    )
+  );
+  self.clients.claim(); // すぐ制御
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  // HTMLは常にネット優先→失敗時キャッシュ（古い配信を避ける）
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(STATIC_CACHE).then(c => c.put('/weather-pwa/index.html', copy));
+        return res;
+      }).catch(() => caches.match('/weather-pwa/index.html'))
     );
     return;
   }
-  // API等はネット優先
-  e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
-});
-
-// Push通知を使いたい場合の雛形
-self.addEventListener('push', (event)=>{
-  const data = event.data ? event.data.json() : { title: 'お知らせ', body: '更新があります' };
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'お知らせ', {
-      body: data.body,
-      icon: 'icons/icon-192.png',
-      badge: 'icons/icon-192.png'
-    })
+  // それ以外はキャッシュ優先フォールバック
+  event.respondWith(
+    caches.match(req).then(res => res || fetch(req))
   );
 });
