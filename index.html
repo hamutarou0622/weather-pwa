@@ -1,344 +1,465 @@
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>暇つぶしサイト + 今日の天気</title>
-  <meta name="theme-color" content="#111111" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>暇つぶしサイト（全部入り・ゲート付き）</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta name="theme-color" content="#111111" />
   <style>
-    /* ============ 既存スタイル ============ */
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; margin:0; padding:0; background-color:#1a1a1a; color:#f5f5f5; overflow-x:hidden; scroll-behavior:smooth; }
-    .background { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-2; background-size:cover; background-position:center; transition:opacity 1s ease-in-out; opacity:0; }
-    .background.active { opacity:1; }
-    header { background-color:#111; color:white; padding:1.5em 0; text-align:center; letter-spacing:1px; border-bottom:2px solid #444; box-shadow:0 4px 8px rgba(0,0,0,.5); position:relative; }
-    header h1 { margin:0; font-weight:300; font-size:3em; letter-spacing:.1em; animation:fadeIn 2s ease-in-out; }
-    @keyframes fadeIn { from{opacity:0; transform:translateY(-20px);} to{opacity:1; transform:translateY(0);} }
-    .section-container { margin:40px auto; max-width:1200px; padding:20px; background-color:rgba(255,255,255,.1); border-radius:10px; box-shadow:0 8px 16px rgba(0,0,0,.2); opacity:0; transform:translateY(50px); transition:opacity .6s ease-out, transform .6s ease-out; }
-    .visible { opacity:1; transform:translateY(0); }
-    .hidden-button { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:transparent; border:none; width:200px; height:100px; cursor:pointer; outline:none; transition:background-color .5s ease; z-index:10; }
-    .hidden-button:hover { background-color:yellow; }
-    .flame-bg { position:relative; width:100%; height:500px; background:url('https://i.gifer.com/OzG.gif') no-repeat center/cover; overflow:hidden; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,.3); animation:scaleIn 2s ease-in-out; }
-    .goal-text { position:absolute; top:50%; left:100%; font-family:'Impact', sans-serif; font-size:200px; font-weight:bold; color:#ff0000; transform:translateY(-50%); white-space:nowrap; animation:slideGoal 5s cubic-bezier(.42,0,.58,1) infinite; text-shadow:4px 4px 8px rgba(0,0,0,.7); }
-    @keyframes scaleIn { from{transform:scale(.9); opacity:.5;} to{transform:scale(1); opacity:1;} }
-    @keyframes slideGoal { 0%{ left:100%; transform:translateY(-50%) scale(.8);} 20%{ left:50%; transform:translateY(-50%) scale(1.1);} 40%{ left:0%; transform:translateY(-50%) scale(1);} 60%{ left:-50%; transform:translateY(-50%) scale(1.1);} 100%{ left:-100%; transform:translateY(-50%) scale(.8);} }
-    .tasks-playlist { display:flex; justify-content:space-between; gap:20px; margin-top:20px; }
-    .todo-list, .playlist { width:48%; padding:20px; border-radius:8px; background-color:#2a2a2a; box-shadow:0 4px 8px rgba(0,0,0,.3); animation:fadeInUp 1s ease-in-out; }
-    @keyframes fadeInUp { from{ opacity:0; transform:translateY(20px);} to{ opacity:1; transform:translateY(0);} }
-    .todo-list h2, .playlist h2 { font-size:1.8em; margin-bottom:20px; color:#f5f5f5; font-weight:500; border-bottom:2px solid #444; padding-bottom:10px; }
-    #todo-items, #playlist-items { list-style:none; padding:0; margin:0; }
-    #todo-items li, #playlist-items li { padding:12px; margin-bottom:10px; background-color:#333; border-radius:6px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,.2); transition:box-shadow .3s ease, transform .3s ease; }
-    #todo-items li:hover, #playlist-items li:hover { box-shadow:0 4px 8px rgba(0,0,0,.3); transform:translateY(-3px); }
-    #todo-items li button, #playlist-items li button { background-color:#ff4d4d; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; transition:background-color .2s ease; }
-    #todo-items li button:hover, #playlist-items li button:hover { background-color:#ff1a1a; }
-    input[type="text"], input[type="file"], input[type="password"] { width:100%; padding:12px; border-radius:4px; border:1px solid #444; margin-bottom:10px; box-sizing:border-box; background-color:#2a2a2a; color:#f5f5f5; transition:border-color .3s ease; }
-    input[type="text"]:focus, input[type="file"]:focus, input[type="password"]:focus { border-color:#007bff; outline:none; }
-    button { background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px; transition:background-color .3s ease, transform .3s ease; }
-    button:hover { background-color:#0056b3; transform:translateY(-3px); }
-    .soccer-scoreboard iframe, .league-widget iframe { width:100%; height:500px; border-radius:8px; border:none; box-shadow:0 4px 8px rgba(0,0,0,.2); transition:transform .3s ease; }
-    .soccer-scoreboard iframe:hover, .league-widget iframe:hover { transform:scale(1.02); }
-    .audio-player { display:flex; flex-direction:column; align-items:center; background-color:#2a2a2a; padding:20px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,.3); animation:fadeInUp 1s ease-in-out; }
-    .audio-player audio { width:100%; margin-top:20px; border-radius:8px; background-color:#444; }
-    footer { text-align:center; padding:2em 0; background-color:#111; color:white; font-size:14px; border-top:2px solid #444; box-shadow:0 -4px 8px rgba(0,0,0,.5); animation:fadeIn 2s ease-in-out; }
-    #protected-content { display:none; }
-    /* 💩: 15秒上限（1回のみ） */
-    .poop-emoji { font-size:50px; position:fixed; top:-50px; z-index:9999; animation: fall var(--dur, 5s) linear 1; text-shadow:0 0 10px rgba(255,255,0,.75); }
-    @keyframes fall { to{ transform:translateY(100vh) rotate(360deg);} }
-    .poop-emoji::before { content:'💩'; color:#ff0000; animation:poopGlow 2s linear infinite alternate; }
-    @keyframes poopGlow { 0%{ text-shadow:0 0 10px rgba(255,0,0,.5);} 100%{ text-shadow:0 0 20px rgba(255,255,0,1);} }
-    .calendar-container { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-    #calendar-header { display:flex; justify-content:space-between; align-items:center; }
-    #calendar-header button { background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px; transition:background-color .3s ease, transform .3s ease; }
-    #calendar-header button:hover { background-color:#0056b3; transform:translateY(-3px); }
-    #calendar { flex:1; }
-    table.calendar { width:100%; background-color:#444; border-collapse:collapse; border-radius:8px; overflow:hidden; }
-    table.calendar th, table.calendar td { padding:10px; text-align:center; border:1px solid #666; color:#f5f5f5; cursor:pointer; }
-    table.calendar th { background-color:#333; }
-    table.calendar td:hover { background-color:#555; }
-    .selected-date { background-color:#007bff; }
-    .memo-display { background-color:#2a2a2a; color:#f5f5f5; padding:20px; border-radius:8px; margin-top:20px; display:none; }
-    #calendar-memo { width:300px; padding:20px; background-color:#2a2a2a; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,.3); }
-    #calendar-memo textarea { width:100%; height:200px; padding:10px; border-radius:4px; background-color:#333; color:#f5f5f5; border:1px solid #444; resize:none; }
-    #calendar-memo button { margin-top:10px; }
+    :root{ --fg:#f5f5f5; --muted:#aaa; --accent:#007bff; --card:#2a2a2a; --line:#444; --soft:rgba(0,0,0,.25); }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--fg); font-family:'Helvetica Neue', Arial, sans-serif; overflow-x:hidden;
+      background:#000 url('https://divnil.com/wallpaper/iphone5/img/app/w/a/wallpaper-iphone-6-messi-2015-wallpaper_a7fb5125f293a4745e37d4e3066debad_raw.jpg') no-repeat center center fixed;
+      background-size:cover; text-shadow:0 1px 2px #000;
+    }
+    header{position:sticky; top:0; z-index:10; text-align:center; padding:16px 12px;
+      background:rgba(17,17,17,.7); backdrop-filter:saturate(1.2) blur(2px); border-bottom:1px solid #333; box-shadow:0 4px 8px var(--soft)}
+    header h1{margin:0; font-weight:300; letter-spacing:.08em}
 
-    /* ============ 追加：天気カード & PWA操作 ============ */
-    .topbar-actions { position:absolute; top:12px; right:12px; display:flex; gap:8px; }
-    .pwa-ghost { background:#222; color:#fff; border-radius:10px; padding:8px 12px; font-size:12px; border:1px solid #333; }
-    .weather-card { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; background:#222; border:1px solid #333; border-radius:12px; padding:14px; }
-    .weather-main { display:flex; gap:16px; align-items:flex-end; }
-    .weather-big { font-size:34px; line-height:1; }
-    .muted { color:#aaa; }
-    .two-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .tiny { font-size:12px; }
-    @media (max-width: 768px){ .tasks-playlist { flex-direction:column; } #calendar-memo{ width:100%; } .goal-text{ font-size:120px; } }
+    .section{max-width:1200px; margin:20px auto; padding:16px; background:rgba(0,0,0,.35);
+      border:1px solid #333; border-radius:12px; box-shadow:0 8px 18px var(--soft);
+      opacity:0; transform:translateY(24px); transition:opacity .6s, transform .6s}
+    .section.visible{opacity:1; transform:none}
+
+    button{appearance:none; border:0; border-radius:10px; padding:10px 14px; background:var(--accent); color:#fff; cursor:pointer}
+    button.ghost{background:#222; border:1px solid var(--line)}
+    input[type="text"], input[type="password"], textarea{
+      width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:#151515; color:#fff;
+    }
+    ul{margin:0; padding:0; list-style:none}
+
+    /* GOOOAL */
+    .flame-bg{position:relative; height:420px; background:url('https://i.gifer.com/OzG.gif') center/cover no-repeat;
+      overflow:hidden; border-radius:12px; box-shadow:0 6px 16px var(--soft)}
+    .goal-text{position:absolute; top:50%; left:100%; transform:translateY(-50%);
+      font:bold 180px/1 'Impact', sans-serif; color:#ff0000; text-shadow:4px 4px 8px rgba(0,0,0,.7); white-space:nowrap;
+      animation:slideGoal 5s cubic-bezier(.42,0,.58,1) infinite}
+    @keyframes slideGoal{
+      0%{left:100%; transform:translateY(-50%) scale(.8)}
+      20%{left:50%; transform:translateY(-50%) scale(1.1)}
+      40%{left:0%; transform:translateY(-50%) scale(1)}
+      60%{left:-50%; transform:translateY(-50%) scale(1.1)}
+      100%{left:-100%; transform:translateY(-50%) scale(.8)}
+    }
+
+    /* 天気カード */
+    .tiny{font-size:12px; color:var(--muted)}
+    .weather-card{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center;
+      background:var(--card); border:1px solid #333; border-radius:12px; padding:14px}
+    .weather-big{font-size:36px; line-height:1}
+    .two{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px}
+
+    /* ToDo */
+    .columns{display:flex; gap:16px; flex-wrap:wrap}
+    .todo, .playlist{flex:1 1 420px; background:var(--card); border:1px solid #333; border-radius:12px; padding:16px}
+    #todo-items li{display:flex; justify-content:space-between; align-items:center; gap:8px;
+      background:#333; border-radius:8px; padding:10px; margin:8px 0}
+    #todo-items li button{background:#ff4d4d}
+
+    /* 埋め込み */
+    .league-widget iframe, .tactics iframe{width:100%; height:520px; border:0; border-radius:10px}
+
+    /* 音楽 */
+    .player{background:var(--card); border:1px solid #333; border-radius:12px; padding:16px}
+    .player audio{width:100%; margin:12px 0; background:#444; border-radius:8px}
+
+    /* カレンダー */
+    .cal-wrap{display:flex; gap:16px; flex-wrap:wrap}
+    #calendar{flex:1 1 520px}
+    table.calendar{width:100%; background:#444; border-collapse:collapse; border-radius:8px; overflow:hidden}
+    table.calendar th, table.calendar td{padding:10px; text-align:center; border:1px solid #666}
+    table.calendar th{background:#333}
+    table.calendar td:hover{background:#555; cursor:pointer}
+    .selected-date{background:#0a66ff}
+    #memo-box{background:var(--card); border:1px solid #333; border-radius:12px; padding:16px}
+
+    /* この日の予定（カレンダー連動） */
+    #task-list li{display:flex; align-items:center; gap:8px; background:#333; border-radius:8px; padding:8px; margin:6px 0}
+    #task-list li button{background:#ff4d4d}
+
+    /* ゲート（起動時パスワード） */
+    .gate{
+      position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.6); backdrop-filter: blur(3px);
+    }
+    .gate-card{
+      width:min(92vw,420px); background:#111; border:1px solid #333; border-radius:14px; padding:18px;
+      box-shadow:0 12px 28px rgba(0,0,0,.45);
+    }
+    .gate-card h2{margin:.2em 0 .6em 0; font-weight:600}
+    .gate-card .tiny{display:block; margin-top:6px}
+
+    @media (max-width:768px){ .goal-text{font-size:120px} }
   </style>
 </head>
 <body>
-  <!-- 背景 -->
-  <div id="particle-background" class="background active" style="background-image:url('https://i.gifer.com/9viJ.gif');"></div>
-  <div id="sky-background" class="background" style="background-image:url('https://i.gifer.com/bF4.gif');"></div>
-  <div id="earth-background" class="background" style="background-image:url('https://i.gifer.com/NSu6.gif');"></div>
+  <!-- ======= 起動ゲート（poopで解除） ======= -->
+  <div id="gate" class="gate" role="dialog" aria-modal="true" aria-label="ページ保護">
+    <div class="gate-card">
+      <h2>パスワード</h2>
+      <input type="password" id="gatePw" placeholder="キーワードを入力">
+      <div style="display:flex; gap:8px; margin-top:10px">
+        <button id="gateBtn">入る</button>
+      </div>
+      <span class="tiny">正しいキーワードを入力してください。</span>
+    </div>
+  </div>
 
   <header>
     <h1>暇つぶしサイト</h1>
-    <!-- 隠しボタン（阿部寛） -->
-    <button class="hidden-button" onclick="redirectToAbePage()"></button>
-    <!-- PWA 操作用 -->
-    <div class="topbar-actions">
-      <button id="installBtn" class="pwa-ghost" style="display:none">インストール</button>
-      <button id="notifyBtn" class="pwa-ghost">通知</button>
-    </div>
+    <!-- 透明な隠しボタン（全体クリックでも反応） -->
+    <button style="position:absolute; inset:0; z-index:20; opacity:0; pointer-events:auto" onclick="redirectToAbePage()" aria-label="hidden"></button>
   </header>
 
-  <!-- ★ 追加：今日の天気（+明日） -->
-  <section class="section-container" id="weather-section">
+  <!-- 天気（今日＋明日） -->
+  <section class="section" id="weather-section">
     <h2><i class="fa-solid fa-cloud-sun"></i> 今日と明日の天気</h2>
     <div class="weather-card">
-      <div class="weather-main">
-        <div>
-          <div class="tiny muted">地点</div>
-          <div id="placeLabel">—</div>
-          <div class="tiny muted" id="updatedLabel">更新: —</div>
-        </div>
-        <div>
-          <div id="todayTemp" class="weather-big">--℃</div>
-          <div id="todayRange" class="muted">今日: 最高 --℃ / 最低 --℃</div>
-          <div id="todayPop" class="muted">降水確率 --%</div>
-          <div style="height:8px"></div>
-          <div id="tomorrowRange" class="muted">明日: 最高 --℃ / 最低 --℃</div>
-          <div id="tomorrowPop" class="muted">降水確率 --%</div>
-        </div>
+      <div>
+        <div class="tiny">地点</div><div id="placeLabel">—</div>
+        <div class="tiny" id="updatedLabel">更新: —</div>
       </div>
-      <div class="two-grid">
-        <button id="useGeo">現在地から取得</button>
-        <button id="openSettings">地点を設定</button>
+      <div>
+        <div id="todayTemp" class="weather-big">--℃</div>
+        <div id="todayRange" class="tiny">今日: 最高 --℃ / 最低 --℃</div>
+        <div id="todayPop" class="tiny">降水確率 --%</div>
+        <div style="height:6px"></div>
+        <div id="tomorrowRange" class="tiny">明日: 最高 --℃ / 最低 --℃</div>
+        <div id="tomorrowPop" class="tiny">降水確率 --%</div>
       </div>
     </div>
+    <div class="two">
+      <button id="useGeo">現在地から取得</button>
+      <button class="ghost" id="openSettings">地点を設定</button>
+    </div>
 
-    <!-- 設定モーダル風カード -->
-    <div class="section-container" id="settings" style="display:none; padding:16px;">
-      <div class="tiny muted">都市名（例: Kiyosu, Aichi, JP）</div>
-      <input type="text" id="cityInput" placeholder="都市名（英語推奨）" />
-      <div class="tiny muted" style="margin-top:8px;">* 正確に出したい場合は緯度経度を使います（例: 35.1815, 136.9066）。</div>
-      <div class="tiny muted" style="margin-top:8px;">緯度, 経度（任意）</div>
-      <input type="text" id="latlonInput" placeholder="35.1815, 136.9066" />
-      <div style="display:flex; gap:8px; margin-top:8px;">
+    <div id="settings" class="section" style="display:none; margin-top:10px; padding:12px">
+      <div class="tiny">都市名（例: Kiyosu, Aichi, JP）</div>
+      <input type="text" id="cityInput" value="Kiyosu, Aichi, JP">
+      <div class="tiny" style="margin-top:6px">緯度, 経度（任意） 例: 35.2001, 136.8524</div>
+      <input type="text" id="latlonInput" placeholder="35.2001, 136.8524">
+      <div style="display:flex; gap:8px; margin-top:8px">
         <button id="saveCity">保存して更新</button>
-        <button id="closeSettings">閉じる</button>
+        <button class="ghost" id="closeSettings">閉じる</button>
       </div>
-      <div class="tiny muted" style="margin-top:8px;">※ 初回は位置情報の許可が必要です。拒否した場合は「地点を設定」から都市名で取得できます。</div>
     </div>
   </section>
 
-  <!-- 既存：GOOOAL アニメーション -->
-  <section class="flame-bg section-container" id="goal-animation-section">
+  <!-- 炎GOOOAL -->
+  <section class="section flame-bg" id="goal-animation-section">
     <div class="goal-text">GOOOAL</div>
   </section>
 
-  <!-- 既存：目次とToDoリスト -->
-  <section class="tasks-playlist section-container" id="todo-list-section">
-    <div class="todo-list">
-      <h2><i class="fas fa-tasks"></i> To Do List</h2>
+  <!-- 目次 & グローバルToDo -->
+  <section class="section columns" id="todo-section">
+    <div class="todo">
+      <h2><i class="fas fa-tasks"></i> To Do List（自動保存）</h2>
       <ul id="todo-items"></ul>
-      <input type="text" id="todo-input" placeholder="新しいタスクを追加" />
+      <input type="text" id="todo-input" placeholder="新しいタスクを追加">
       <button onclick="addTodo()">追加</button>
     </div>
     <div class="playlist">
       <h2><i class="fas fa-list"></i> 目次</h2>
-      <ul id="playlist-items">
-        <li><a href="#goal-animation-section">GOOOAL アニメーション</a></li>
-        <li><a href="#todo-list-section">To Do リスト</a></li>
-        <li><a href="#soccer-scoreboard-section">戦術ボード</a></li>
-        <li><a href="#laliga-widget-section">ラ・リーガ</a></li>
-        <li><a href="#premierleague-widget-section">プレミアリーグ</a></li>
+      <ul>
+        <li><a href="#weather-section">天気（今日＋明日）</a></li>
+        <li><a href="#goal-animation-section">GOOOAL アニメ</a></li>
+        <li><a href="#tactics-section">戦術ボード</a></li>
+        <li><a href="#laliga-section">ラ・リーガ</a></li>
+        <li><a href="#pl-section">プレミアリーグ</a></li>
         <li><a href="#calendar-section">カレンダー</a></li>
-        <li><a href="#password-protected-section">パスワード保護</a></li>
-        <li><a href="#audio-player-section">音楽プレーヤー</a></li>
-        <li><a href="#minitokyo-3d-section">MiniTokyo 3D</a></li>
+        <li><a href="#player-section">音楽プレーヤー</a></li>
+        <li><a href="#minitokyo-section">MiniTokyo 3D</a></li>
       </ul>
     </div>
   </section>
 
-  <!-- 既存：MiniTokyo 3D -->
-  <section class="section-container" id="minitokyo-3d-section">
+  <!-- MiniTokyo -->
+  <section class="section" id="minitokyo-section">
     <h2>MiniTokyo 3D</h2>
-    <iframe src="https://minitokyo3d.com/" width="100%" height="600" style="border:none;"></iframe>
+    <iframe src="https://minitokyo3d.com/" width="100%" height="600" style="border:0" loading="lazy"></iframe>
   </section>
 
-  <!-- 既存：リーグ情報ウィジェット -->
-  <section class="league-widget section-container" id="laliga-widget-section">
+  <!-- リーグ -->
+  <section class="section league-widget" id="laliga-section">
     <h2>ラ・リーガ</h2>
-    <iframe src="https://www.bing.com/sportsdetails?q=%E3%83%A9%E3%80%80%E3%83%AA%E3%83%BC%E3%81%8C&sport=Soccer&scenario=League&TimezoneId=Tokyo%20Standard%20Time&league=Soccer_SpainLaLiga&intent=Generic&seasonyear=2024&segment=sports&isl2=true&" frameborder="0" scrolling="yes"></iframe>
+    <iframe src="https://www.bing.com/sportsdetails?q=%E3%83%A9%E3%80%80%E3%83%AA%E3%83%BC%E3%81%8C&sport=Soccer&scenario=League&TimezoneId=Tokyo%20Standard%20Time&league=Soccer_SpainLaLiga&intent=Generic&seasonyear=2024&segment=sports&isl2=true&" loading="lazy"></iframe>
   </section>
-  <section class="league-widget section-container" id="premierleague-widget-section">
+  <section class="section league-widget" id="pl-section">
     <h2>プレミアリーグ</h2>
-    <iframe src="https://www.bing.com/sportsdetails?q=%E3%83%97%E3%83%AC%E3%83%9F%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%B0&sport=Soccer&scenario=League&TimezoneId=Tokyo%20Standard%20Time&league=Soccer_EnglandPremierLeague&intent=Generic&seasonyear=2024&segment=sports&isl2=true&" frameborder="0" scrolling="yes"></iframe>
+    <iframe src="https://www.bing.com/sportsdetails?q=%E3%83%97%E3%83%AC%E3%83%9F%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%B0&sport=Soccer&scenario=League&TimezoneId=Tokyo%20Standard%20Time&league=Soccer_EnglandPremierLeague&intent=Generic&seasonyear=2024&segment=sports&isl2=true&" loading="lazy"></iframe>
   </section>
 
-  <!-- 既存：戦術ボード -->
-  <section class="soccer-scoreboard section-container" id="soccer-scoreboard-section">
+  <!-- 戦術ボード -->
+  <section class="section tactics" id="tactics-section">
     <h2>戦術ボード</h2>
-    <iframe src="https://www.footballbox.club/tactics-board.html"></iframe>
+    <iframe src="https://www.footballbox.club/tactics-board.html" loading="lazy"></iframe>
   </section>
 
-  <!-- 既存：カレンダーとメモ -->
-  <section class="section-container calendar-container" id="calendar-section">
-    <div id="calendar-header">
+  <!-- カレンダー＋メモ＋この日の予定 -->
+  <section class="section cal-wrap" id="calendar-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
       <button onclick="changeMonth(-1)">前月</button>
-      <h2 id="current-month"><i class="fas fa-calendar-alt"></i> カレンダー</h2>
+      <h2 id="month-title"><i class="fas fa-calendar-alt"></i> カレンダー</h2>
       <button onclick="changeMonth(1)">次月</button>
     </div>
     <div id="calendar"></div>
-    <div id="calendar-memo">
-      <h2>この日のメモ</h2>
+    <div id="memo-box">
+      <h3>この日のメモ</h3>
       <textarea id="memo-textarea" placeholder="メモを入力..."></textarea>
       <button onclick="saveMemo()">メモを保存</button>
+      <div id="memo-view" style="margin-top:10px; display:none">
+        <h4>保存済みメモ</h4>
+        <p id="memo-content"></p>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #333;margin:14px 0">
+      <h3>この日の予定</h3>
+      <div style="display:flex; gap:8px; margin-bottom:8px">
+        <input type="text" id="task-input" placeholder="この日にやることを追加">
+        <button id="task-add-btn">追加</button>
+      </div>
+      <ul id="task-list"></ul>
+      <div class="tiny">※ カレンダーで選択した日付に紐づきます（ローカル保存）。</div>
     </div>
   </section>
-  <div id="memo-display" class="memo-display">
-    <h2>メモ:</h2>
-    <p id="memo-content"></p>
-  </div>
 
-  <!-- 既存：音楽プレーヤー（修正済） -->
-  <section class="section-container audio-player" id="audio-player-section">
+  <!-- 音楽 -->
+  <section class="section player" id="player-section">
     <h2>音楽プレーヤー</h2>
-    <audio id="audio-player" controls></audio>
-    <input type="file" id="audio-upload" accept="audio/*" multiple style="display:none" />
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button onclick="addMusic()">音楽を追加</button>
+    <audio id="audio" controls></audio>
+    <input type="file" id="pick-audio" accept="audio/*" multiple style="display:none">
+    <div style="display:flex;gap:8px">
+      <button class="ghost" onclick="document.getElementById('pick-audio').click()">音楽を追加</button>
       <button onclick="playRandom()">ランダム再生</button>
     </div>
-    <ul id="playlist"></ul>
+    <ul id="plist" style="margin-top:8px"></ul>
   </section>
 
-  <!-- 既存：パスワード保護（リンク削除済み） -->
-  <section class="password-protected section-container" id="password-protected-section">
-    <h2>パスワード保護</h2>
-    <input type="password" id="password-input" placeholder="パスワードを入力" />
-    <button onclick="checkPassword()">確認</button>
-    <div id="protected-content">
-      <p>ここに秘密の内容を表示します。</p>
-    </div>
-  </section>
-
-  <footer>
+  <footer class="section" style="text-align:center">
     <p>&copy; 2024 暇つぶしサイト</p>
   </footer>
 
   <script>
-    // ========= 共通DOM参照 =========
-    let audioFiles = [];
-    let audioPlayer = document.getElementById('audio-player');
-    const calendar = document.getElementById('calendar');
-    const memoTextarea = document.getElementById('memo-textarea');
-    const memoDisplay = document.getElementById('memo-display');
-    const memoContent = document.getElementById('memo-content');
-    const currentMonthDisplay = document.getElementById('current-month');
-    let selectedDate = null; let currentYear = new Date().getFullYear(); let currentMonth = new Date().getMonth();
+    const $ = (s)=>document.querySelector(s);
 
-    // ========= ToDo =========
-    function addTodo(){ const todoInput=document.getElementById('todo-input'); const todoItems=document.getElementById('todo-items'); const task=todoInput.value.trim(); if(!task){ alert('タスクを入力してください。'); return;} const li=document.createElement('li'); li.textContent=task; const del=document.createElement('button'); del.textContent='削除'; del.onclick=()=>todoItems.removeChild(li); li.appendChild(del); todoItems.appendChild(li); todoInput.value=''; }
+    // スクロール表示
+    const onScroll=()=>document.querySelectorAll('.section').forEach(sec=>{
+      const r=sec.getBoundingClientRect(); if(r.top<innerHeight-100) sec.classList.add('visible');
+    });
+    document.addEventListener('scroll', onScroll);
 
-    // ========= 音楽（修正：ファイル追加＆再生リスト構築） =========
-    function addMusic(){ document.getElementById('audio-upload').click(); }
-    document.getElementById('audio-upload').addEventListener('change', (e)=>{
-      const files = Array.from(e.target.files).filter(f=>f.type.startsWith('audio/'));
-      if(!files.length){ alert('音声ファイルを選んでください'); return; }
-      const list = document.getElementById('playlist');
-      files.forEach((f)=>{
-        audioFiles.push(f);
-        const li = document.createElement('li');
-        const title = document.createElement('span');
-        title.textContent = f.name + ' ';
-        const btn = document.createElement('button');
-        btn.textContent = '再生';
-        btn.onclick = ()=>{
-          try{ if(audioPlayer.src) URL.revokeObjectURL(audioPlayer.src); }catch{}
-          audioPlayer.src = URL.createObjectURL(f);
-          audioPlayer.play();
-        };
-        li.appendChild(title); li.appendChild(btn); list.appendChild(li);
-      });
-      // 1曲目を自動再生
-      if(files[0]){
-        try{ if(audioPlayer.src) URL.revokeObjectURL(audioPlayer.src); }catch{}
-        audioPlayer.src = URL.createObjectURL(files[0]);
-        audioPlayer.play();
+    /* 阿部寛：確実遷移 */
+    function openAbe(url='https://abehiroshi.la.coocan.jp/'){
+      try{
+        const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+        if(isStandalone){ window.location.href = url; return; }
+        const w = window.open(url, '_blank', 'noopener');
+        if(!w) window.location.href = url;
+      }catch{ window.location.href = url; }
+    }
+    function redirectToAbePage(){
+      alert('隠しボタンを発見！阿部寛のホームページに移動します...');
+      openAbe();
+    }
+
+    /* 起動ゲート（poopで解除） */
+    function unlockGate(){
+      const v = ($('#gatePw').value || '').trim();
+      if(v === 'poop'){
+        sessionStorage.setItem('gate.ok','1');
+        $('#gate').style.display='none';
+      }else{
+        alert('パスワードが違います');
       }
-      e.target.value=''; // 同じファイルを再選択できるようリセット
+    }
+    $('#gateBtn').addEventListener('click', unlockGate);
+    $('#gatePw').addEventListener('keydown', (e)=>{ if(e.key==='Enter') unlockGate(); });
+    window.addEventListener('DOMContentLoaded', ()=>{
+      if(sessionStorage.getItem('gate.ok') === '1'){ $('#gate').style.display='none'; }
     });
 
-    function playRandom(){ if(audioFiles.length===0){ alert('音楽が追加されていません。'); return;} const i=Math.floor(Math.random()*audioFiles.length); const f=audioFiles[i]; try{ if(audioPlayer.src) URL.revokeObjectURL(audioPlayer.src); }catch{} audioPlayer.src=URL.createObjectURL(f); audioPlayer.play(); }
+    /* グローバルToDo（保存） */
+    const TODO_KEY='todo.items.v1';
+    const loadTodos = ()=>{ try{return JSON.parse(localStorage.getItem(TODO_KEY)||'[]')}catch{return[]} };
+    const saveTodos = (v)=>localStorage.setItem(TODO_KEY, JSON.stringify(v||[]));
+    function renderTodos(){
+      const ul=$('#todo-items'); ul.innerHTML='';
+      loadTodos().forEach((t,i)=>{
+        const li=document.createElement('li');
+        const span=document.createElement('span'); span.textContent=t.text;
+        const del=document.createElement('button'); del.textContent='削除';
+        del.onclick=()=>{ const a=loadTodos(); a.splice(i,1); saveTodos(a); renderTodos(); };
+        li.append(span, del); ul.appendChild(li);
+      });
+    }
+    function addTodo(){
+      const v=$('#todo-input').value.trim(); if(!v){ alert('タスクを入力してください。'); return; }
+      const a=loadTodos(); a.push({text:v}); saveTodos(a); $('#todo-input').value=''; renderTodos();
+    }
 
-    // ========= パスワード（15秒上限） =========
-    function checkPassword(){ const pw=document.getElementById('password-input').value; const correct='poop'; if(pw===correct){ triggerPoopAnimation(); document.getElementById('protected-content').style.display='block'; } else { alert('パスワードが違います。'); } }
-    function triggerPoopAnimation(){
-      const COUNT = 30;
-      for(let i=0;i<COUNT;i++){
-        let d=document.createElement('div');
-        d.textContent='💩';
-        d.classList.add('poop-emoji');
-        d.style.left=Math.random()*100+'vw';
-        const dur = (Math.random()*10+5).toFixed(2)+'s'; // 5〜15秒
-        d.style.setProperty('--dur', dur);
-        document.body.appendChild(d);
-        d.addEventListener('animationend',()=>d.remove());
+    /* カレンダー＋メモ＋この日の予定 */
+    const cal = $('#calendar'), memoTA=$('#memo-textarea'), memoView=$('#memo-view'), memoContent=$('#memo-content');
+    const monthTitle=$('#month-title'); let selDate=null, curY=new Date().getFullYear(), curM=new Date().getMonth();
+
+    function createCalendar(y,m){
+      cal.innerHTML='';
+      const daysIn=new Date(y,m+1,0).getDate(), first=new Date(y,m,1).getDay();
+      const table=document.createElement('table'); table.className='calendar';
+      const thead=document.createElement('thead'), tr=document.createElement('tr');
+      ['日','月','火','水','木','金','土'].forEach(d=>{ const th=document.createElement('th'); th.textContent=d; tr.appendChild(th); });
+      thead.appendChild(tr); table.appendChild(thead);
+      const tbody=document.createElement('tbody'); let row=document.createElement('tr');
+      for(let i=0;i<first;i++) row.appendChild(document.createElement('td'));
+      for(let d=1; d<=daysIn; d++){
+        if(row.children.length===7){ tbody.appendChild(row); row=document.createElement('tr'); }
+        const td=document.createElement('td'); td.textContent=d;
+        td.onclick=(ev)=>{ selDate=`${y}-${m+1}-${d}`; document.querySelectorAll('td').forEach(td=>td.classList.remove('selected-date'));
+                           ev.target.classList.add('selected-date'); loadMemo(selDate); renderDayTasks(selDate); };
+        row.appendChild(td);
       }
-      // 念のため15秒後に残骸を全掃除
-      setTimeout(()=>{ document.querySelectorAll('.poop-emoji').forEach(x=>x.remove()); }, 15000);
+      tbody.appendChild(row); table.appendChild(tbody); cal.appendChild(table);
+      const names=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+      monthTitle.innerHTML = `<i class="fas fa-calendar-alt"></i> ${names[m]} ${y}`;
+    }
+    function changeMonth(step){ curM+=step; if(curM<0){curM=11;curY--} else if(curM>11){curM=0;curY++} createCalendar(curY,curM); }
+    function saveMemo(){ if(!selDate){ alert('日付を選択してください'); return; } const t=memoTA.value.trim(); if(!t){ alert('メモを入力してください。'); return; }
+      localStorage.setItem(`memo-${selDate}`, t); alert('メモが保存されました！'); loadMemo(selDate); }
+    function loadMemo(date){ const s=localStorage.getItem(`memo-${date}`); if(s){ memoContent.textContent=s; memoView.style.display='block'; } else { memoView.style.display='none'; } }
+
+    // この日の予定（カレンダー連動）
+    const taskInput = $('#task-input');
+    const taskList  = $('#task-list');
+    function tasksKey(date){ return `tasks-${date}`; } // 例: tasks-2025-8-9
+    function loadDayTasks(date){ try{ return JSON.parse(localStorage.getItem(tasksKey(date)) || '[]'); }catch{ return []; } }
+    function saveDayTasks(date, items){ localStorage.setItem(tasksKey(date), JSON.stringify(items||[])); }
+    function renderDayTasks(date){
+      if(!date){ taskList.innerHTML = '<li class="tiny">日付を選択してください</li>'; return; }
+      const items = loadDayTasks(date);
+      taskList.innerHTML = '';
+      if(items.length === 0){
+        taskList.innerHTML = '<li class="tiny">予定はまだありません</li>';
+        return;
+      }
+      items.forEach((t, i)=>{
+        const li = document.createElement('li');
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!t.done;
+        cb.onchange = ()=>{ const a=loadDayTasks(date); a[i].done = cb.checked; saveDayTasks(date,a); span.style.textDecoration = cb.checked ? 'line-through' : 'none'; };
+        const span = document.createElement('span'); span.textContent = t.text; span.style.flex='1'; span.style.textDecoration = t.done ? 'line-through' : 'none';
+        const del = document.createElement('button'); del.textContent = '削除'; del.onclick = ()=>{ const a=loadDayTasks(date); a.splice(i,1); saveDayTasks(date,a); renderDayTasks(date); };
+        li.append(cb, span, del); taskList.appendChild(li);
+      });
+    }
+    document.getElementById('task-add-btn').addEventListener('click', ()=>{
+      if(!selDate){ alert('まず日付を選択してください'); return; }
+      const v = (taskInput.value || '').trim();
+      if(!v){ alert('予定を入力してください'); return; }
+      const a = loadDayTasks(selDate);
+      a.push({ text:v, done:false });
+      saveDayTasks(selDate, a);
+      taskInput.value = '';
+      renderDayTasks(selDate);
+    });
+
+    /* 音楽 */
+    let files=[]; const audio=$('#audio');
+    $('#pick-audio').addEventListener('change', (e)=>{
+      const list=$('#plist'); const fs=[...e.target.files].filter(f=>f.type.startsWith('audio/'));
+      fs.forEach(f=>{
+        files.push(f);
+        const li=document.createElement('li'); li.style.margin='6px 0';
+        const name=document.createElement('span'); name.textContent=f.name+' ';
+        const btn=document.createElement('button'); btn.textContent='再生';
+        btn.onclick=()=>{ try{ if(audio.src) URL.revokeObjectURL(audio.src);}catch{} audio.src=URL.createObjectURL(f); audio.play(); };
+        li.append(name, btn); list.appendChild(li);
+      });
+      e.target.value='';
+    });
+    function playRandom(){ if(!files.length){ alert('音楽が追加されていません。'); return; }
+      const f=files[Math.floor(Math.random()*files.length)];
+      try{ if(audio.src) URL.revokeObjectURL(audio.src);}catch{} audio.src=URL.createObjectURL(f); audio.play();
     }
 
-    // ========= スクロール表示 =========
-    function handleScroll(){ const sections=document.querySelectorAll('.section-container'); sections.forEach(s=>{ const r=s.getBoundingClientRect(); if(r.top<window.innerHeight-100){ s.classList.add('visible'); } }); }
-    document.addEventListener('scroll', handleScroll);
-
-    // ========= 背景切替 =========
-    function cycleBackgrounds(){ const p=document.getElementById('particle-background'); const s=document.getElementById('sky-background'); const e=document.getElementById('earth-background'); let cur='particle'; setInterval(()=>{ if(cur==='particle'){ p.classList.remove('active'); s.classList.add('active'); e.classList.remove('active'); cur='sky'; } else if(cur==='sky'){ p.classList.remove('active'); s.classList.remove('active'); e.classList.add('active'); cur='earth'; } else { p.classList.add('active'); s.classList.remove('active'); e.classList.remove('active'); cur='particle'; } }, 20000); }
-    function redirectToAbePage(){ alert('隠しボタンを発見！阿部寛のホームページに移動します...'); window.location.href='https://abehiroshi.la.coocan.jp/'; }
-
-    // ========= カレンダー =========
-    function createCalendar(year, month){ calendar.innerHTML=''; const daysInMonth=new Date(year, month+1, 0).getDate(); const firstDay=new Date(year, month, 1).getDay(); const table=document.createElement('table'); table.classList.add('calendar'); const thead=document.createElement('thead'); const tbody=document.createElement('tbody'); const headerRow=document.createElement('tr'); ["日","月","火","水","木","金","土"].forEach(d=>{ const th=document.createElement('th'); th.textContent=d; headerRow.appendChild(th); }); thead.appendChild(headerRow); table.appendChild(thead); let row=document.createElement('tr'); for(let i=0;i<firstDay;i++){ row.appendChild(document.createElement('td')); }
-      for(let day=1; day<=daysInMonth; day++){ if(row.children.length===7){ tbody.appendChild(row); row=document.createElement('tr'); } const cell=document.createElement('td'); cell.textContent=day; cell.onclick=function(ev){ selectDate(year, month+1, day, ev); }; row.appendChild(cell); }
-      tbody.appendChild(row); table.appendChild(tbody); calendar.appendChild(table); updateMonthDisplay(); }
-    function updateMonthDisplay(){ const names=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]; currentMonthDisplay.textContent=`${names[currentMonth]} ${currentYear}`; }
-    function changeMonth(step){ currentMonth+=step; if(currentMonth<0){ currentMonth=11; currentYear--; } else if(currentMonth>11){ currentMonth=0; currentYear++; } createCalendar(currentYear, currentMonth); }
-    function selectDate(year, month, day, ev){ selectedDate=`${year}-${month}-${day}`; document.querySelectorAll('td').forEach(td=>td.classList.remove('selected-date')); ev.target.classList.add('selected-date'); loadMemo(selectedDate); }
-    function saveMemo(){ if(!selectedDate){ alert('日付を選択してください'); return; } const memoText=memoTextarea.value; if(memoText){ localStorage.setItem(`memo-${selectedDate}`, memoText); alert('メモが保存されました！'); loadMemo(selectedDate); } else { alert('メモを入力してください。'); } }
-    function loadMemo(date){ const saved=localStorage.getItem(`memo-${date}`); if(saved){ memoContent.textContent=saved; memoDisplay.style.display='block'; } else { memoDisplay.style.display='none'; } }
-
-    // ========= 天気（Open‑Meteo：今日 + 明日） =========
-    const $q = (s)=>document.querySelector(s);
-    const store = { get k(){ return 'pwa.weather.settings.v1'; }, load(){ try{ return JSON.parse(localStorage.getItem(this.k)||'{}'); }catch{ return {}; } }, save(v){ localStorage.setItem(this.k, JSON.stringify(v||{})); } };
-    function fmtDate(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; }
-    async function geocodeCity(name){ const u=new URL('https://geocoding-api.open-meteo.com/v1/search'); u.search=new URLSearchParams({ name, count:1, language:'ja', format:'json' }); const r=await fetch(u); if(!r.ok) throw new Error('geocode fail'); const j=await r.json(); if(!j.results?.length) throw new Error('no results'); const { latitude, longitude, name:n, country }=j.results[0]; return { lat: latitude, lon: longitude, label: country?`${n}, ${country}`: n }; }
-    async function fetchWeather(lat, lon){ const u=new URL('https://api.open-meteo.com/v1/forecast'); u.search=new URLSearchParams({ latitude:lat, longitude:lon, daily:'temperature_2m_max,temperature_2m_min,precipitation_probability_max', timezone:'Asia/Tokyo' }); const r=await fetch(u, { cache:'no-store' }); if(!r.ok) throw new Error('wx fail'); return await r.json(); }
-    function renderWeather(label, data){ const d=data?.daily||{}; const tmax=d.temperature_2m_max?.[0]; const tmin=d.temperature_2m_min?.[0]; const pop=d.precipitation_probability_max?.[0]; const tmax2=d.temperature_2m_max?.[1]; const tmin2=d.temperature_2m_min?.[1]; const pop2=d.precipitation_probability_max?.[1]; $q('#placeLabel').textContent=label||'—'; $q('#todayTemp').textContent=Number.isFinite(tmax)&&Number.isFinite(tmin) ? `${Math.round((tmax+tmin)/2)}℃` : '--℃'; $q('#todayRange').textContent=`今日: 最高 ${tmax??'--'}℃ / 最低 ${tmin??'--'}℃`; $q('#todayPop').textContent=`降水確率 ${pop??'--'}%`; $q('#tomorrowRange').textContent=`明日: 最高 ${tmax2??'--'}℃ / 最低 ${tmin2??'--'}℃`; $q('#tomorrowPop').textContent=`降水確率 ${pop2??'--'}%`; $q('#updatedLabel').textContent='更新: '+fmtDate(new Date()); }
-    async function updateWeatherFromSettings(){ const s=store.load(); let lat=s.lat, lon=s.lon, label=s.label; try{ if(!lat||!lon){ if(s.city){ const g=await geocodeCity(s.city); lat=g.lat; lon=g.lon; label=g.label; s.lat=lat; s.lon=lon; s.label=label; store.save(s); } else { throw new Error('no location'); } } const wx=await fetchWeather(lat, lon); localStorage.setItem('pwa.weather.cache', JSON.stringify({ when: Date.now(), label, wx })); renderWeather(label, wx); }catch(e){ const cache=JSON.parse(localStorage.getItem('pwa.weather.cache')||'null'); if(cache){ renderWeather(cache.label, cache.wx); } }
+    /* 天気（Open-Meteo：清須市デフォ＋今日/明日） */
+    const WX = { k:'pwa.weather.settings.v1', load(){ try{return JSON.parse(localStorage.getItem(this.k)||'{}')}catch{return{}} }, save(v){ localStorage.setItem(this.k, JSON.stringify(v||{})) } };
+    const fmt=(d)=>{const z=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`};
+    async function geocodeCity(name){
+      const u=new URL('https://geocoding-api.open-meteo.com/v1/search'); u.search=new URLSearchParams({name, count:1, language:'ja', format:'json'});
+      const r=await fetch(u); if(!r.ok) throw new Error('geocode'); const j=await r.json(); if(!j.results?.length) throw new Error('noresult');
+      const {latitude, longitude, name:n, country}=j.results[0]; return {lat:latitude, lon:longitude, label:country?`${n}, ${country}`:n};
     }
-    async function useGeolocation(){ try{ const pos=await new Promise((ok, ng)=>navigator.geolocation.getCurrentPosition(ok, ng, { enableHighAccuracy:true, timeout:8000 })); const lat=+pos.coords.latitude.toFixed(4); const lon=+pos.coords.longitude.toFixed(4); const s=store.load(); s.lat=lat; s.lon=lon; s.label=`現在地 (${lat}, ${lon})`; delete s.city; store.save(s); updateWeatherFromSettings(); }catch(e){ alert('位置情報が取得できませんでした。権限を確認してください。'); } }
+    async function fetchWeather(lat,lon){
+      const u=new URL('https://api.open-meteo.com/v1/forecast');
+      u.search=new URLSearchParams({latitude:lat, longitude:lon, daily:'temperature_2m_max,temperature_2m_min,precipitation_probability_max', timezone:'Asia/Tokyo'});
+      const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error('wx'); return await r.json();
+    }
+    function renderWeather(label,data){
+      const d=data.daily||{}; const tmax=d.temperature_2m_max?.[0], tmin=d.temperature_2m_min?.[0], pop=d.precipitation_probability_max?.[0];
+      const tmax2=d.temperature_2m_max?.[1], tmin2=d.temperature_2m_min?.[1], pop2=d.precipitation_probability_max?.[1];
+      $('#placeLabel').textContent=label||'—';
+      $('#todayTemp').textContent=(isFinite(tmax)&&isFinite(tmin))? `${Math.round((tmax+tmin)/2)}℃`:'--℃';
+      $('#todayRange').textContent=`今日: 最高 ${tmax??'--'}℃ / 最低 ${tmin??'--'}℃`;
+      $('#todayPop').textContent=`降水確率 ${pop??'--'}%`;
+      $('#tomorrowRange').textContent=`明日: 最高 ${tmax2??'--'}℃ / 最低 ${tmin2??'--'}℃`;
+      $('#tomorrowPop').textContent=`降水確率 ${pop2??'--'}%`;
+      $('#updatedLabel').textContent='更新: '+fmt(new Date());
+    }
+    async function updateWeatherFromSettings(){
+      const s=WX.load(); let lat=s.lat, lon=s.lon, label=s.label;
+      try{
+        if(!lat||!lon){
+          if(s.city){ const g=await geocodeCity(s.city); lat=g.lat; lon=g.lon; label=g.label; Object.assign(s,{lat,lon,label}); WX.save(s); }
+          else throw new Error('no location');
+        }
+        const wx=await fetchWeather(lat,lon);
+        localStorage.setItem('pwa.weather.cache', JSON.stringify({when:Date.now(), label, wx}));
+        renderWeather(label, wx);
+      }catch(e){
+        const cache=JSON.parse(localStorage.getItem('pwa.weather.cache')||'null');
+        if(cache) renderWeather(cache.label, cache.wx);
+      }
+    }
+    function useGeolocation(){
+      if(!('geolocation' in navigator)){ alert('この端末は位置情報に未対応です'); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>{
+          const lat=+pos.coords.latitude.toFixed(4), lon=+pos.coords.longitude.toFixed(4);
+          const s=WX.load(); Object.assign(s,{lat,lon,label:`現在地 (${lat}, ${lon})`}); delete s.city; WX.save(s);
+          updateWeatherFromSettings();
+        },
+        (err)=>{
+          let msg='位置情報が取得できません。';
+          if(err.code===1) msg+='\n→ 権限が拒否されています。ブラウザのサイト設定で許可してください。';
+          if(err.code===2) msg+='\n→ 端末の位置情報がOFFか電波が不安定です。';
+          if(err.code===3) msg+='\n→ タイムアウトしました。屋外で再試行してください。';
+          alert(msg);
+        },
+        {enableHighAccuracy:true, timeout:12000, maximumAge:0}
+      );
+    }
 
-    // ========= 通知（簡易） =========
-    async function requestNotification(){ if(!('Notification' in window)){ alert('この端末は通知に未対応です'); return; } const perm=await Notification.requestPermission(); if(perm!=='granted'){ alert('通知が許可されていません'); return; } scheduleLocal6amReminder(); alert('通知を許可しました。6:00のリマインドを設定しました（動作は端末依存）'); }
-    function msUntilNext6am(){ const now=new Date(); const next=new Date(); next.setHours(6,0,0,0); if(next<=now) next.setDate(next.getDate()+1); return next-now; }
-    function scheduleLocal6amReminder(){ const ms=msUntilNext6am(); setTimeout(()=>{ if(Notification.permission==='granted') new Notification('おはようございます', { body:'今日と明日の天気を確認しましょう！' }); scheduleLocal6amReminder(); }, ms); }
+    // イベント束ね & 初期化
+    $('#useGeo').addEventListener('click', useGeolocation);
+    $('#openSettings').addEventListener('click', ()=> $('#settings').style.display='block');
+    $('#closeSettings').addEventListener('click', ()=> $('#settings').style.display='none');
+    $('#saveCity').addEventListener('click', ()=>{
+      const city=$('#cityInput').value.trim(), latlon=$('#latlonInput').value.trim(); const s=WX.load();
+      if(latlon){
+        const [a,b]=latlon.split(',').map(x=>parseFloat(x.trim()));
+        if([a,b].every(Number.isFinite)){ Object.assign(s,{lat:a,lon:b,label:`(${a}, ${b})`}); delete s.city; }
+        else { alert('緯度,経度の形式にしてください'); return; }
+      }else if(city){ s.city=city; delete s.lat; delete s.lon; delete s.label; }
+      else { alert('都市名 か 緯度経度 のどちらかを入力'); return; }
+      WX.save(s); $('#settings').style.display='none'; updateWeatherFromSettings();
+    });
 
-    // ========= PWA（install + SW） =========
-    let deferredPrompt=null; window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; document.getElementById('installBtn').style.display='inline-block'; });
-    document.getElementById('installBtn').addEventListener('click', async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; document.getElementById('installBtn').style.display='none'; });
-    if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./service-worker.js'); }); }
-
-    // ========= イベント束ね =========
-    document.getElementById('useGeo').addEventListener('click', useGeolocation);
-    document.getElementById('openSettings').addEventListener('click', ()=> document.getElementById('settings').style.display='block');
-    document.getElementById('closeSettings').addEventListener('click', ()=> document.getElementById('settings').style.display='none');
-    document.getElementById('saveCity').addEventListener('click', async ()=>{ const city=document.getElementById('cityInput').value.trim(); const latlon=document.getElementById('latlonInput').value.trim(); const s=store.load(); if(latlon){ const m=latlon.split(',').map(x=>parseFloat(x.trim())); if(m.length===2 && m.every(Number.isFinite)){ s.lat=m[0]; s.lon=m[1]; s.label=`(${s.lat}, ${s.lon})`; delete s.city; } else { alert('緯度,経度の形式にしてください'); return; } } else if(city){ s.city=city; delete s.lat; delete s.lon; delete s.label; } else { alert('都市名 か 緯度経度 のどちらかを入力してください'); return; } store.save(s); document.getElementById('settings').style.display='none'; updateWeatherFromSettings(); });
-    document.getElementById('notifyBtn').addEventListener('click', requestNotification);
-
-    // ========= 初期化 =========
-    window.addEventListener('DOMContentLoaded', ()=>{ handleScroll(); cycleBackgrounds(); createCalendar(currentYear, currentMonth); });
-    (async function initWeather(){ const s=store.load(); const first=!s.city && !s.lat && !s.lon; if(first && 'geolocation' in navigator){ try{ await useGeolocation(); }catch{} } updateWeatherFromSettings(); const cache=JSON.parse(localStorage.getItem('pwa.weather.cache')||'null'); if(cache){ renderWeather(cache.label, cache.wx); } })();
+    window.addEventListener('DOMContentLoaded', ()=>{
+      onScroll(); renderTodos(); createCalendar(curY, curM); renderDayTasks(selDate);
+      const s=WX.load(); if(!s.city && !s.lat && !s.lon){ WX.save({city:'Kiyosu, Aichi, JP', label:'清須市'}); }
+      updateWeatherFromSettings();
+      const cache=JSON.parse(localStorage.getItem('pwa.weather.cache')||'null'); if(cache) renderWeather(cache.label, cache.wx);
+    });
   </script>
 </body>
 </html>
