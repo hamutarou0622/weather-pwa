@@ -1,13 +1,13 @@
 {
-    "name": "暇つぶしサイト + 天気",
-    "short_name": "暇つぶし天気",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "background_color": "#111111",
-    "theme_color": "#111111",
-    "orientation": "portrait-primary",
-    "icons": [
-      { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-      { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-    ]
-  }
+  "name": "weather-pwa",
+  "short_name": "weather",
+  "start_url": "/weather-pwa/",
+  "scope": "/weather-pwa/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
