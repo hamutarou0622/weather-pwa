@@ -261,7 +261,7 @@ if ('serviceWorker' in navigator) {
     document.addEventListener('scroll', onScroll);
 
     /* 阿部寛：確実遷移 */
-    function openAbe(url='https://abehiroshi.la.coocan.jp/'){
+    function openAbe(url='https://ja.wikipedia.org/wiki/%E9%98%BF%E9%83%A8%E5%AF%9B'){
       try{
         const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
         if(isStandalone){ window.location.href = url; return; }
@@ -473,5 +473,6 @@ if ('serviceWorker' in navigator) {
   </script>
 </body>
 </html>
+
 
 
