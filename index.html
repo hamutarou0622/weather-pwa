@@ -2,24 +2,13 @@
 <html lang="ja">
 <head>
  <script>
-/* --- SWとキャッシュを一発リセット（?reset-sw=1 で実行） --- */
-(async () => {
-  if (location.search.includes('reset-sw=1')) {
-    try {
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-      }
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-    } catch (e) {}
-    // クエリを外して再読込
-    const url = location.origin + location.pathname;
-    location.replace(url);
-  }
-})();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/weather-pwa/service-worker.js', {
+      scope: '/weather-pwa/'
+    });
+  });
+}
 </script>
 
   <meta charset="UTF-8" />
@@ -484,4 +473,5 @@
   </script>
 </body>
 </html>
+
 
