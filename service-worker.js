@@ -1,10 +1,11 @@
 // service-worker.js
-const CACHE_VERSION = 'v9-2025-08-09-2005';   // ← 毎回ここを変える
-const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v10-2025-08-09-2100';   // ★毎回ここを変える
+const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 const BASE = '/weather-pwa/';
 
 const ASSETS = [
-  BASE, BASE + 'index.html',
+  BASE,                     // ← ルート
+  BASE + 'index.html',
   BASE + 'manifest.json',
   BASE + 'icons/icon-192.png',
   BASE + 'icons/icon-512.png',
@@ -12,28 +13,41 @@ const ASSETS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();           // 旧SW待たず即入れ替え準備
+  self.skipWaiting(); // すぐ新SWに
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))) // 既存キャッシュを**全部**削除
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))) // 既存キャッシュ全削除
   );
-  self.clients.claim();         // すぐ新SWが全タブを制御
+  self.clients.claim();
 });
 
-// HTMLはネット優先（失敗時キャッシュ）。他はキャッシュ優先。
+// HTMLはネット最優先（HTTPキャッシュも無視）→ 失敗時キャッシュ
 self.addEventListener('fetch', (e) => {
   const req = e.request;
+
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(STATIC_CACHE).then(c => c.put(BASE + 'index.html', copy));
-        return res;
-      }).catch(() => caches.match(BASE + 'index.html'))
-    );
+    e.respondWith((async () => {
+      try {
+        const net = await fetch(new Request(req.url, { cache: 'reload' }));
+        // 同じ内容を "/" と "/index.html" の両方に保存
+        const copy1 = net.clone();
+        const copy2 = net.clone();
+        const c = await caches.open(STATIC_CACHE);
+        await c.put(BASE, copy1);
+        await c.put(BASE + 'index.html', copy2);
+        return net;
+      } catch {
+        // どちらかがあれば返す
+        return (await caches.match(req)) ||
+               (await caches.match(BASE)) ||
+               (await caches.match(BASE + 'index.html'));
+      }
+    })());
     return;
   }
+
+  // それ以外はキャッシュ優先
   e.respondWith(caches.match(req).then(res => res || fetch(req)));
 });
